@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Wordl - Reclama tus tokens</title>
+  <title>WORLD APP - Reclama Peronios</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Clear+Sans:wght@700&display=swap');
-    
+   
     body {
       margin: 0;
       height: 100vh;
@@ -52,10 +52,12 @@
       border-radius: 8px;
       cursor: pointer;
       transition: 0.2s;
+      margin: 5px;
     }
     button:hover { background: #6aaa64; }
     button:disabled { background: #3a3a3c; cursor: not-allowed; }
     .message { margin-top: 20px; font-size: 1.3rem; }
+    .wallet-info { margin-top: 10px; font-size: 1rem; color: #b9b9b9; }
     @keyframes pop {
       0% { transform: scale(1); }
       50% { transform: scale(1.2); }
@@ -64,33 +66,59 @@
   </style>
 </head>
 <body>
-  <h1>WORDL</h1>
-  
+  <h1>WORLD APP</h1>
+ 
   <div class="grid" id="grid">
-    <div class="tile">T</div>
-    <div class="tile">O</div>
-    <div class="tile">K</div>
+    <div class="tile">P</div>
     <div class="tile">E</div>
+    <div class="tile">R</div>
+    <div class="tile">O</div>
     <div class="tile">N</div>
   </div>
 
-  <button id="claimBtn">¡Reclamar 500 tokens!</button>
+  <button id="connectBtn">Conectar Wallet World</button>
+  <button id="claimBtn" disabled>¡Reclama 100 PERONIOS!</button>
   <div class="message" id="message"></div>
+  <div class="wallet-info" id="walletInfo">Tokens totales: <span id="totalTokens">0</span> PER</div>
 
   <script>
+    const connectBtn = document.getElementById("connectBtn");
     const claimBtn = document.getElementById("claimBtn");
     const message = document.getElementById("message");
+    const totalTokensSpan = document.getElementById("totalTokens");
     const tiles = document.querySelectorAll(".tile");
-    const KEY = "wordl_last_claim";
+    const KEY_CLAIM = "worldl_last_claim";
+    const KEY_TOKENS = "worldl_total_peronios";
+    const KEY_WALLET = "worldl_wallet_connected";
+
+    let isConnected = localStorage.getItem(KEY_WALLET) === "true";
+    let totalTokens = parseInt(localStorage.getItem(KEY_TOKENS)) || 0;
+    totalTokensSpan.textContent = totalTokens;
 
     function canClaim() {
-      const last = localStorage.getItem(KEY);
+      const last = localStorage.getItem(KEY_CLAIM);
       if (!last) return true;
       const diff = Date.now() - parseInt(last);
       return diff >= 24 * 60 * 60 * 1000; // 24 horas
     }
 
+    function connectWallet() {
+      // Mock conexión a World App SDK (en real: usa worldcoin.org/developers SDK)
+      // Ejemplo real: await worldcoin.verifyProof({ ... });
+      isConnected = true;
+      localStorage.setItem(KEY_WALLET, "true");
+      connectBtn.textContent = "Wallet Conectada";
+      connectBtn.disabled = true;
+      connectBtn.style.background = "#3a3a3c";
+      if (canClaim()) {
+        claimBtn.disabled = false;
+      }
+      message.textContent = "¡Wallet conectada! Ahora reclama.";
+    }
+
     function claimTokens() {
+      if (!isConnected) return;
+
       // Animación Wordle-style
       tiles.forEach((tile, i) => {
         setTimeout(() => {
@@ -98,27 +126,35 @@
         }, i * 150);
       });
 
-      message.textContent = "¡+500 tokens reclamados! Vuelve mañana.";
-      localStorage.setItem(KEY, Date.now().toString());
+      totalTokens += 100;
+      localStorage.setItem(KEY_TOKENS, totalTokens.toString());
+      totalTokensSpan.textContent = totalTokens;
+      message.textContent = "¡+100 PERONIOS reclamados! Vuelve mañana.";
+      localStorage.setItem(KEY_CLAIM, Date.now().toString());
       claimBtn.disabled = true;
       claimBtn.textContent = "Ya reclamaste hoy";
-      
-      // Aquí puedes conectar tu wallet real o API
-      // ejemplo: connectWalletAndMint(500);
+
+      // Mock API call a World App (en real: POST a tu backend para mint tokens)
+      // fetch('https://tu-api.worldapp.com/claim', { method: 'POST', body: JSON.stringify({ amount: 100, user: walletAddress }) });
+      console.log("Reclamo enviado a World App API");
     }
 
-    // Comprobar si ya reclamó hoy
-    if (canClaim()) {
-      claimBtn.onclick = claimTokens;
-    } else {
-      const next = new Date(parseInt(localStorage.getItem(KEY)) + 24*60*60*1000);
-      message.textContent = `Vuelve en ${next.toLocaleTimeString()}`;
-      claimBtn.disabled = true;
-      claimBtn.textContent = "Ya reclamaste hoy";
-      
-      // Poner las letras en verde si ya reclamó
-      tiles.forEach(t => t.classList.add("green"));
+    // Comprobar conexión y reclamo
+    if (isConnected) {
+      connectBtn.textContent = "Wallet Conectada";
+      connectBtn.disabled = true;
+      connectBtn.style.background = "#3a3a3c";
+      if (canClaim()) {
+        claimBtn.disabled = false;
+      } else {
+        const next = new Date(parseInt(localStorage.getItem(KEY_CLAIM)) + 24*60*60*1000);
+        message.textContent = `Vuelve en ${next.toLocaleTimeString()}`;
+        tiles.forEach(t => t.classList.add("green"));
+      }
     }
+
+    connectBtn.onclick = connectWallet;
+    claimBtn.onclick = claimTokens;
   </script>
 </body>
 </html>
