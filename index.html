@@ -3,71 +3,24 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>WORLD APP - Reclama Peronios</title>
+  <title>WORLD APP - Peronio Claim</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Clear+Sans:wght@700&display=swap');
-   
-    body {
-      margin: 0;
-      height: 100vh;
-      background: #121213;
-      color: white;
-      font-family: 'Clear Sans', sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-    h1 {
-      font-size: 3rem;
-      margin-bottom: 2rem;
-      color: #538d4e;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 5px;
-      margin-bottom: 40px;
-    }
-    .tile {
-      width: 60px;
-      height: 60px;
-      background: #3a3a3c;
-      border: 2px solid #565758;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2rem;
-      font-weight: bold;
-      text-transform: uppercase;
-    }
-    .green { background: #538d4e; border-color: #538d4e; color: white; animation: pop 0.2s; }
-    button {
-      padding: 15px 40px;
-      font-size: 1.5rem;
-      font-weight: bold;
-      background: #538d4e;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: 0.2s;
-      margin: 5px;
-    }
-    button:hover { background: #6aaa64; }
-    button:disabled { background: #3a3a3c; cursor: not-allowed; }
-    .message { margin-top: 20px; font-size: 1.3rem; }
-    .wallet-info { margin-top: 10px; font-size: 1rem; color: #b9b9b9; }
-    @keyframes pop {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.2); }
-      100% { transform: scale(1); }
-    }
+    body {margin:0;height:100vh;background:#121213;color:white;font-family:'Clear Sans',sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+    h1 {font-size:3rem;margin-bottom:2rem;color:#538d4e;}
+    .grid {display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:40px;}
+    .tile {width:62px;height:62px;background:#3a3a3c;border:2px solid #565758;display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:bold;text-transform:uppercase;}
+    .green {background:#538d4e !important;border-color:#538d4e !important;color:white;animation:pop .2s;}
+    button {padding:15px 40px;font-size:1.5rem;font-weight:bold;background:#538d4e;color:white;border:none;border-radius:8px;cursor:pointer;transition:.2s;margin:8px;}
+    button:hover:not(:disabled) {background:#6aaa64;}
+    button:disabled {background:#3a3a3c;cursor:not-allowed;opacity:0.7;}
+    .message {margin-top:20px;font-size:1.4rem;}
+    .wallet-info {margin-top:15px;font-size:1.1rem;color:#b9cfba;}
+    @keyframes pop {0%{transform:scale(1)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
   </style>
 </head>
 <body>
   <h1>WORLD APP</h1>
- 
   <div class="grid" id="grid">
     <div class="tile">P</div>
     <div class="tile">E</div>
@@ -78,83 +31,84 @@
 
   <button id="connectBtn">Conectar Wallet World</button>
   <button id="claimBtn" disabled>¡Reclama 100 PERONIOS!</button>
+  
   <div class="message" id="message"></div>
-  <div class="wallet-info" id="walletInfo">Tokens totales: <span id="totalTokens">0</span> PER</div>
+  <div class="wallet-info">Tus PERONIOS: <strong id="totalTokens">0</strong></div>
 
   <script>
-    const connectBtn = document.getElementById("connectBtn");
-    const claimBtn = document.getElementById("claimBtn");
-    const message = document.getElementById("message");
-    const totalTokensSpan = document.getElementById("totalTokens");
-    const tiles = document.querySelectorAll(".tile");
-    const KEY_CLAIM = "worldl_last_claim";
-    const KEY_TOKENS = "worldl_total_peronios";
-    const KEY_WALLET = "worldl_wallet_connected";
+    const connectBtn   = document.getElementById("connectBtn");
+    const claimBtn     = document.getElementById("claimBtn");
+    const message      = document.getElementById("message");
+    const totalTokens  = document.getElementById("totalTokens");
+    const tiles        = document.querySelectorAll(".tile");
 
-    let isConnected = localStorage.getItem(KEY_WALLET) === "true";
-    let totalTokens = parseInt(localStorage.getItem(KEY_TOKENS)) || 0;
-    totalTokensSpan.textContent = totalTokens;
+    const KEY_WALLET   = "peronio_wallet_connected";
+    const KEY_CLAIM    = "peronio_last_claim";
+    const KEY_BALANCE  = "peronio_balance";
 
-    function canClaim() {
+    // Cargar estado al iniciar
+    let walletConnected = localStorage.getItem(KEY_WALLET) === "true";
+    let balance = parseInt(localStorage.getItem(KEY_BALANCE)) || 0;
+    totalTokens.textContent = balance;
+
+    function canClaimToday() {
       const last = localStorage.getItem(KEY_CLAIM);
       if (!last) return true;
       const diff = Date.now() - parseInt(last);
-      return diff >= 24 * 60 * 60 * 1000; // 24 horas
+      return diff >= 24 * 60 * 60 * 1000; // 24h
     }
 
-    function connectWallet() {
-      // Mock conexión a World App SDK (en real: usa worldcoin.org/developers SDK)
-      // Ejemplo real: await worldcoin.verifyProof({ ... });
-      isConnected = true;
-      localStorage.setItem(KEY_WALLET, "true");
-      connectBtn.textContent = "Wallet Conectada";
-      connectBtn.disabled = true;
-      connectBtn.style.background = "#3a3a3c";
-      if (canClaim()) {
-        claimBtn.disabled = false;
+    function updateUI() {
+      // Estado wallet
+      if (walletConnected) {
+        connectBtn.textContent = "Wallet Conectada";
+        connectBtn.disabled = true;
+        connectBtn.style.background = "#3a3a3c";
       }
-      message.textContent = "¡Wallet conectada! Ahora reclama.";
-    }
 
-    function claimTokens() {
-      if (!isConnected) return;
-
-      // Animación Wordle-style
-      tiles.forEach((tile, i) => {
-        setTimeout(() => {
-          tile.classList.add("green");
-        }, i * 150);
-      });
-
-      totalTokens += 100;
-      localStorage.setItem(KEY_TOKENS, totalTokens.toString());
-      totalTokensSpan.textContent = totalTokens;
-      message.textContent = "¡+100 PERONIOS reclamados! Vuelve mañana.";
-      localStorage.setItem(KEY_CLAIM, Date.now().toString());
-      claimBtn.disabled = true;
-      claimBtn.textContent = "Ya reclamaste hoy";
-
-      // Mock API call a World App (en real: POST a tu backend para mint tokens)
-      // fetch('https://tu-api.worldapp.com/claim', { method: 'POST', body: JSON.stringify({ amount: 100, user: walletAddress }) });
-      console.log("Reclamo enviado a World App API");
-    }
-
-    // Comprobar conexión y reclamo
-    if (isConnected) {
-      connectBtn.textContent = "Wallet Conectada";
-      connectBtn.disabled = true;
-      connectBtn.style.background = "#3a3a3c";
-      if (canClaim()) {
+      // Estado reclamo
+      if (walletConnected && canClaimToday()) {
         claimBtn.disabled = false;
-      } else {
+        claimBtn.textContent = "¡Reclama 100 PERONIOS!";
+        message.textContent = "";
+      } else if (walletConnected && !canClaimToday()) {
         const next = new Date(parseInt(localStorage.getItem(KEY_CLAIM)) + 24*60*60*1000);
-        message.textContent = `Vuelve en ${next.toLocaleTimeString()}`;
+        message.textContent = `Ya reclamaste hoy · Vuelve a las ${next.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}`;
+        claimBtn.disabled = true;
+        claimBtn.textContent = "Ya reclamaste hoy";
         tiles.forEach(t => t.classList.add("green"));
       }
     }
 
-    connectBtn.onclick = connectWallet;
-    claimBtn.onclick = claimTokens;
+    // Conectar wallet (mock, en producción usarías World ID SDK)
+    connectBtn.onclick = () => {
+      walletConnected = true;
+      localStorage.setItem(KEY_WALLET, "true");
+      updateUI();
+      message.textContent = "¡Wallet conectada! Ahora puedes reclamar.";
+    };
+
+    // Reclamar
+    claimBtn.onclick = () => {
+      if (!walletConnected || !canClaimToday()) return;
+
+      // Animación
+      tiles.forEach((tile, i) => {
+        setTimeout(() => tile.classList.add("green"), i * 150);
+      });
+
+      // Sumar tokens
+      balance += 100;
+      localStorage.setItem(KEY_BALANCE, balance);
+      localStorage.setItem(KEY_CLAIM, Date.now().toString());
+      totalTokens.textContent = balance;
+
+      message.textContent = "¡+100 PERONIOS reclamados! Vuelve mañana.";
+      updateUI();
+    };
+
+    // Inicializar UI al cargar la página
+    updateUI();
   </script>
 </body>
 </html>
