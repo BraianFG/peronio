@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Wordl - Reclama tus tokens</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Clear+Sans:wght@700&display=swap');
+    
+    body {
+      margin: 0;
+      height: 100vh;
+      background: #121213;
+      color: white;
+      font-family: 'Clear Sans', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    h1 {
+      font-size: 3rem;
+      margin-bottom: 2rem;
+      color: #538d4e;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 5px;
+      margin-bottom: 40px;
+    }
+    .tile {
+      width: 60px;
+      height: 60px;
+      background: #3a3a3c;
+      border: 2px solid #565758;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+    .green { background: #538d4e; border-color: #538d4e; color: white; animation: pop 0.2s; }
+    button {
+      padding: 15px 40px;
+      font-size: 1.5rem;
+      font-weight: bold;
+      background: #538d4e;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    button:hover { background: #6aaa64; }
+    button:disabled { background: #3a3a3c; cursor: not-allowed; }
+    .message { margin-top: 20px; font-size: 1.3rem; }
+    @keyframes pop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <h1>WORDL</h1>
+  
+  <div class="grid" id="grid">
+    <div class="tile">T</div>
+    <div class="tile">O</div>
+    <div class="tile">K</div>
+    <div class="tile">E</div>
+    <div class="tile">N</div>
+  </div>
+
+  <button id="claimBtn">¡Reclamar 500 tokens!</button>
+  <div class="message" id="message"></div>
+
+  <script>
+    const claimBtn = document.getElementById("claimBtn");
+    const message = document.getElementById("message");
+    const tiles = document.querySelectorAll(".tile");
+    const KEY = "wordl_last_claim";
+
+    function canClaim() {
+      const last = localStorage.getItem(KEY);
+      if (!last) return true;
+      const diff = Date.now() - parseInt(last);
+      return diff >= 24 * 60 * 60 * 1000; // 24 horas
+    }
+
+    function claimTokens() {
+      // Animación Wordle-style
+      tiles.forEach((tile, i) => {
+        setTimeout(() => {
+          tile.classList.add("green");
+        }, i * 150);
+      });
+
+      message.textContent = "¡+500 tokens reclamados! Vuelve mañana.";
+      localStorage.setItem(KEY, Date.now().toString());
+      claimBtn.disabled = true;
+      claimBtn.textContent = "Ya reclamaste hoy";
+      
+      // Aquí puedes conectar tu wallet real o API
+      // ejemplo: connectWalletAndMint(500);
+    }
+
+    // Comprobar si ya reclamó hoy
+    if (canClaim()) {
+      claimBtn.onclick = claimTokens;
+    } else {
+      const next = new Date(parseInt(localStorage.getItem(KEY)) + 24*60*60*1000);
+      message.textContent = `Vuelve en ${next.toLocaleTimeString()}`;
+      claimBtn.disabled = true;
+      claimBtn.textContent = "Ya reclamaste hoy";
+      
+      // Poner las letras en verde si ya reclamó
+      tiles.forEach(t => t.classList.add("green"));
+    }
+  </script>
+</body>
+</html>
